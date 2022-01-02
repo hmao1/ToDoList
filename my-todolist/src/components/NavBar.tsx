@@ -1,14 +1,26 @@
-import { Navbar, Container, Nav } from "react-bootstrap";
-import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom";
+import { Navbar, Container, Nav, NavDropdown } from "react-bootstrap";
+import { useSelector } from "react-redux";
+import { Link } from "react-router-dom";
+import { selectIsLgoin } from "../redux/features/auth/authSlice";
 import Home from "./Home";
 import Login from "./Login";
 import SignUp from "./SignUp";
-import { ToDoList } from "./ToDoList";
 
 const NavBar = () => {
+  const isLogin = useSelector(selectIsLgoin);
   return (
-    <Router>
-      <div>
+    <>
+      {isLogin ? (
+        <Navbar bg="dark" variant="dark" expand="lg">
+          <Container>
+            <Navbar.Brand>To-Do-List</Navbar.Brand>
+            <span style={{ color: "white" }}>Welcome!</span>
+            <NavDropdown title="Dropdown" id="basic-nav-dropdown">
+              <NavDropdown.Item>Log out</NavDropdown.Item>
+            </NavDropdown>
+          </Container>
+        </Navbar>
+      ) : (
         <Navbar bg="dark" variant="dark" expand="lg">
           <Container>
             <Navbar.Brand as={Link} to={"/"}>
@@ -27,25 +39,8 @@ const NavBar = () => {
             </Navbar.Collapse>
           </Container>
         </Navbar>
-      </div>
-
-      <div>
-        <Switch>
-          <Route path="/login">
-            <Login />
-          </Route>
-          <Route path="/signup">
-            <SignUp />
-          </Route>
-          <Route path="/todolist">
-            <ToDoList />
-          </Route>
-          <Route path="/">
-            <Home />
-          </Route>
-        </Switch>
-      </div>
-    </Router>
+      )}
+    </>
   );
 };
 

@@ -1,47 +1,65 @@
 import axios from "axios";
-import React, { Component, useState } from "react";
+import React, { useState } from "react";
+import { Alert } from "react-bootstrap";
 
-import { Alert, Button } from "react-bootstrap";
 import { Link } from "react-router-dom";
-import "../styles/SignUp.css";
-import { ToDoList } from "./ToDoList";
 
-const SigUp = () => {
+import { useSelector, useDispatch } from "react-redux";
+import "../styles/SignUp.css";
+import { RootState } from "../redux/store";
+import {
+  failSignUp,
+  submitSignUpSuccess,
+  submitSignUpFail,
+  successSignUp,
+} from "../redux/features/auth/signUpSlice";
+
+const SignUp = () => {
   const [username, setUserName] = useState("");
   const [password, setPassword] = useState("");
   const [password2, setPassword2] = useState("");
-  const [isLogin, setisLogin] = useState(false);
+  const [signUpMsg, setSignUpMsg] = useState("");
+  const [passwordCheckMsg, setPasswordCheckMsg] = useState("");
 
+  const submitSignUp = useSelector(
+    (state: RootState) => state.signUp.submitSignUp
+  );
+  const isSignUp = useSelector((state: RootState) => state.signUp.isSignUp);
+  const dispatch = useDispatch();
+
+  //simply password validation
   const checkPassword = () => {
     return password === password2;
   };
 
-  const sendRequest = async (
+  const handleSignUp = async (
     e: React.MouseEvent<HTMLButtonElement, MouseEvent>
   ) => {
     e.preventDefault();
     if (checkPassword()) {
-      const res = await axios.post("http://localhost:4000/api/user/signup", {
-        username,
-        password,
-        isAdmin: false,
-      });
+      try {
+        const res = await axios.post("http://localhost:4000/api/user/signup", {
+          username: username,
+          password: password,
+          isAdmin: false,
+        });
 
-      switch (res.status) {
-        case 500:
-          alert("username exists, pelease use another one!");
-          break;
-        case 201:
-          alert("successfully create a new account");
-          setisLogin(true);
-          console.log(res);
-          break;
-        default:
-          alert("network error");
-          break;
+        if (res.status === 201) {
+          dispatch(submitSignUpSuccess());
+          dispatch(successSignUp());
+          setSignUpMsg("successfully signup, please login!");
+          console.log("the res is: ", res);
+        } else if (res.status === 500) {
+          dispatch(failSignUp());
+          setSignUpMsg("fail to sigup, please use a unique name!");
+        }
+      } catch (err) {
+        dispatch(failSignUp());
+        setSignUpMsg("fail to sigup, please use a unique name!");
       }
     } else {
-      alert("two password does not match, please comfirm your password");
+      dispatch(submitSignUpFail());
+      setPasswordCheckMsg("passwords do not match, please verify passwword!");
     }
   };
 
@@ -56,57 +74,64 @@ const SigUp = () => {
   const getPassword2 = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPassword2(e.target.value);
   };
+
   return (
     <>
-      {isLogin ? (
-        <ToDoList />
+      {submitSignUp ? (
+        isSignUp ? (
+          <Alert variant="success">{signUpMsg}</Alert>
+        ) : (
+          <Alert variant="warning">{signUpMsg}</Alert>
+        )
       ) : (
-        <form>
-          <h3>Sign Up</h3>
-
-          <div className="form-group">
-            <label>Username</label>
-            <input
-              type="text"
-              className="form-control"
-              placeholder="First name"
-              onChange={(e) => getUserName(e)}
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Password</label>
-            <input
-              type="password"
-              className="form-control"
-              placeholder="Enter password"
-              onChange={(e) => getPassword(e)}
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Comfirm Password</label>
-            <input
-              type="password"
-              className="form-control"
-              placeholder="Re-enter password"
-              onChange={(e) => getPassword2(e)}
-            />
-          </div>
-
-          <button
-            onClick={(e) => sendRequest(e)}
-            className="btn btn-primary btn-block"
-          >
-            Sign Up
-          </button>
-          <p className="forgot-password text-right">
-            Already registered <Link to="/login">Login</Link>
-          </p>
-        </form>
+        <Alert variant="warning">{passwordCheckMsg}</Alert>
       )}
+
+      <form>
+        <h3>Sign Up</h3>
+
+        <div className="form-group">
+          <label>Username</label>
+          <input
+            type="text"
+            className="form-control"
+            placeholder="First name"
+            onChange={(e) => getUserName(e)}
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Password</label>
+          <input
+            type="password"
+            className="form-control"
+            placeholder="Enter password"
+            onChange={(e) => getPassword(e)}
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Comfirm Password</label>
+          <input
+            type="password"
+            className="form-control"
+            placeholder="Re-enter password"
+            onChange={(e) => getPassword2(e)}
+          />
+        </div>
+
+        <button
+          onClick={(e) => handleSignUp(e)}
+          className="btn btn-primary btn-block"
+        >
+          Sign Up
+        </button>
+        <p className="forgot-password text-right">
+          Already registered <Link to="/login">Login</Link>
+        </p>
+      </form>
     </>
   );
 };
 
-export default SigUp;
+export default SignUp;
